@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { errorMiddleware } from "./lib/errors.js";
+import { v1 } from "./routes/v1.js";
 
 export function createApp() {
   const app = express();
@@ -8,8 +9,7 @@ export function createApp() {
   app.use(express.json());
 
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
-
-  // Phase 1+: mount /api/v1 routers here (loan-schemes, quotes, leads, agent).
+  app.use("/api/v1", v1);
 
   // Error middleware must be last.
   app.use(errorMiddleware);
