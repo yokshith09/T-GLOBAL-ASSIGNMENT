@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model LoanScheme {
+  id            String  @id
+  name          String
+  annualRateBps Int // 1200 = 12.00%
+  maxLtvBps     Int // 7000 = 70%, 7500 = 75%
+  tenureMonths  Int     @default(12)
+  tenureNote    String
+  active        Boolean @default(true)
+  leads         Lead[]
+}
+
+model Lead {
+  id                String     @id @default(cuid())
+  applicationId     String     @unique
+  name              String
+  mobileNumber      String
+  grossWeightGrams  Decimal    @db.Decimal(8, 3)
+  netWeightGrams    Decimal    @db.Decimal(8, 3)
+  karat             Int
+  schemeId          String
+  scheme            LoanScheme @relation(fields: [schemeId], references: [id])
+  pureGoldGrams     Decimal    @db.Decimal(10, 4)
+  goldValuePaise    BigInt
+  eligibleLoanPaise BigInt
+  status            LeadStatus @default(SUBMITTED)
+  source            LeadSource
+  createdAt         DateTime   @default(now())
+
+  audits LeadStatusAudit[]
+
+  @@index([mobileNumber, createdAt])
+  @@index([schemeId])
+}
+
+enum LeadStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum LeadSource {
+  FORM
+  AGENT
+}
+
+// Bonus B1: status-change audit log
+model LeadStatusAudit {
+  id     String      @id @default(cuid())
+  leadId String
+  lead   Lead        @relation(fields: [leadId], references: [id])
+  from   LeadStatus?
+  to     LeadStatus
+  at     DateTime    @default(now())
+}
+
+// Bonus B1: idempotency
+model IdempotencyKey {
+  key       String   @id
+  leadId    String
+  response  Json
+  createdAt DateTime @default(now())
+}
