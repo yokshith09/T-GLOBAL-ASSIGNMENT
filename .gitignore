@@ -9,3 +9,8 @@ coverage/
 *.log
 server/prisma/*.db
 .vite/
+*.tsbuildinfo
+
+# Tooling / session artifacts (not part of the deliverable)
+.anchor/
+.claude/
