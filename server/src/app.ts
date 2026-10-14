@@ -8,6 +8,7 @@ export function createApp() {
   app.use(cors());
   app.use(express.json());
 
+  app.get("/", (_req, res) => res.json({ service: "Gold Loan Portal API", status: "running", health: "ok" }));
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
   app.use("/api/v1", v1);
 
