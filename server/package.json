@@ -11,8 +11,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval": "tsx src/agent/eval/run-eval.ts",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
