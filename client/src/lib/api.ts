@@ -62,7 +62,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+export type Lead = {
+  applicationId: string;
+  name: string;
+  mobileNumberMasked: string;
+  netWeightGrams: number;
+  schemeId: string;
+  eligibleLoanRupees: number;
+  status: "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED";
+  createdAt: string;
+};
+
 export const getSchemes = () => request<Scheme[]>("/loan-schemes");
+export const getLeads = (schemeId?: string) =>
+  request<Lead[]>(`/leads${schemeId ? `?schemeId=${encodeURIComponent(schemeId)}` : ""}`);
 export const postQuote = (input: QuoteRequest) =>
   request<Quote>("/quotes", { method: "POST", body: JSON.stringify(input) });
 export const postLead = (input: LeadRequest) =>
