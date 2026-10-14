@@ -1,3 +1,55 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm ivory canvas + deep vault-green ink + antique gold */
+    --background: 45 33% 97%;
+    --foreground: 155 42% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 155 42% 10%;
+    --primary: 40 62% 44%; /* antique gold */
+    --primary-foreground: 45 40% 98%;
+    --secondary: 150 18% 93%;
+    --secondary-foreground: 155 35% 14%;
+    --muted: 150 16% 94%;
+    --muted-foreground: 155 10% 38%;
+    --accent: 160 58% 20%; /* emerald */
+    --accent-foreground: 45 40% 98%;
+    --destructive: 2 68% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 150 14% 88%;
+    --input: 150 14% 86%;
+    --ring: 40 62% 44%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 155 30% 7%;
+    --foreground: 45 30% 95%;
+    --card: 155 26% 10%;
+    --card-foreground: 45 30% 95%;
+    --primary: 40 66% 55%;
+    --primary-foreground: 155 30% 8%;
+    --secondary: 155 18% 16%;
+    --secondary-foreground: 45 30% 95%;
+    --muted: 155 16% 16%;
+    --muted-foreground: 150 10% 62%;
+    --accent: 160 48% 42%;
+    --accent-foreground: 155 30% 8%;
+    --destructive: 2 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 155 14% 20%;
+    --input: 155 14% 22%;
+    --ring: 40 66% 55%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; }
+  body { @apply bg-background text-foreground antialiased; }
+  .font-display { font-family: "Fraunces", Georgia, "Times New Roman", serif; }
+  /* Tabular figures for money/weights so columns align */
+  .tnum { font-variant-numeric: tabular-nums; }
+}
