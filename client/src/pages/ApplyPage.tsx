@@ -148,7 +148,7 @@ export function ApplyPage() {
         <header className="mb-6">
           <h1 className="font-display text-3xl font-semibold leading-tight">Apply for a gold loan</h1>
           <p className="mt-2 max-w-prose text-muted-foreground">
-            Enter your jewellery details for a live estimate — or tap{" "}
+            Enter your jewellery details for a live estimate, or tap{" "}
             <span className="font-medium text-accent">Loan Assist</span> (bottom-right) to do it by chat.
             The same numbers either way.
           </p>

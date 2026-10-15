@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FAQS, PARTNERS, STEPS } from "@/lib/content";
 
 const WHY = [
-  { icon: Calculator, title: "Exact, not estimated", body: "Every rupee is computed on our server to the paise — the form and the assistant always agree." },
+  { icon: Calculator, title: "Exact, not estimated", body: "Every rupee is computed on our server to the paise, so the form and the assistant always agree." },
   { icon: ShieldCheck, title: "Up to 75% LTV", body: "Fair, regulation-aligned loan-to-value, with the cap enforced on every quote." },
   { icon: Zap, title: "Decision in minutes", body: "A live estimate as you type, and an application ID the moment you submit." },
   { icon: Lock, title: "Private by design", body: "Your mobile number is masked everywhere, and nothing is stored until you submit." },
@@ -16,7 +16,7 @@ const WHY = [
 
 const NEED = [
   { icon: Weight, title: "Weights", body: "Net and gross weight of your jewellery, in grams." },
-  { icon: Scale, title: "Purity", body: "The karat — 18K, 22K or 24K." },
+  { icon: Scale, title: "Purity", body: "The karat: 18K, 22K or 24K." },
   { icon: IdCard, title: "Contact", body: "Your name and a 10-digit mobile number." },
 ];
 
@@ -56,7 +56,7 @@ export function LandingPage() {
                 Turn your gold into a <span className="text-gold">fair loan</span>, the same day.
               </h1>
               <p className="anim-fade-up mt-5 max-w-prose text-lg text-muted-foreground" style={{ animationDelay: "200ms" }}>
-                Enter your jewellery details for an instant, transparent estimate — or just chat with
+                Enter your jewellery details for an instant, transparent estimate, or just chat with
                 our assistant. Up to 75% of your gold's value, with no surprises.
               </p>
               <div className="anim-fade-up mt-8 flex flex-wrap gap-3" style={{ animationDelay: "280ms" }}>
@@ -130,7 +130,7 @@ export function LandingPage() {
           <section id="how-it-works" className="scroll-mt-24">
             <h2 className="font-display text-3xl font-semibold">How it works</h2>
             <p className="mt-2 max-w-prose text-muted-foreground">
-              A transparent, server-checked estimate in three steps — through the form or the assistant.
+              A transparent, server-checked estimate in three steps, through the form or the assistant.
             </p>
             <div className="mt-6 grid gap-5 sm:grid-cols-3">
               {STEPS.map((s, i) => (
@@ -139,7 +139,7 @@ export function LandingPage() {
                     <span className="grid h-10 w-10 place-items-center rounded-full bg-accent text-accent-foreground">
                       <s.icon className="h-5 w-5" />
                     </span>
-                    <span className="font-display text-3xl font-semibold text-primary/15">{i + 1}</span>
+                    <span className="font-display text-3xl font-bold text-gold">{i + 1}</span>
                   </div>
                   <h3 className="mt-4 font-medium">{s.title}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{s.body}</p>
@@ -166,7 +166,7 @@ export function LandingPage() {
                 </ul>
                 <div className="mt-5 flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2.5 text-xs text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 shrink-0 text-accent" />
-                  No account needed, and nothing is stored until you submit — the whole thing takes about two minutes.
+                  No account needed, and nothing is stored until you submit. The whole thing takes about two minutes.
                 </div>
               </div>
 
@@ -205,7 +205,7 @@ export function LandingPage() {
             <p className="mt-4 text-sm text-muted-foreground">
               Still unsure? Open the form and tap{" "}
               <Link to="/apply" className="font-medium text-accent underline underline-offset-4">Loan Assist</Link>
-              {" "}— it answers and can start your application.
+              . It answers and can start your application.
             </p>
           </section>
 

@@ -70,24 +70,29 @@ export function CalculatorPage() {
   const bullet = plan ? isBullet(plan) : false;
   const months = bullet ? (plan?.tenureMonths ?? 12) : tenure;
 
-  const breakdown = useMemo(() => {
-    if (!plan || !amount) return null;
+  const payableFor = (principal: number) => {
+    if (!plan) return { emi: null as number | null, interest: 0, total: principal };
     const rate = plan.annualRatePercent;
     if (bullet) {
-      const interest = amount * (rate / 100) * (months / 12);
-      return { emi: null as number | null, interest, total: amount + interest };
+      const interest = principal * (rate / 100) * (months / 12);
+      return { emi: null as number | null, interest, total: principal + interest };
     }
-    const m = emi(amount, rate, months);
+    const m = emi(principal, rate, months);
     const total = m * months;
-    return { emi: m, interest: total - amount, total };
-  }, [plan, amount, months, bullet]);
+    return { emi: m, interest: total - principal, total };
+  };
+
+  const breakdown = useMemo(() => (amount ? payableFor(amount) : null), [plan, amount, months, bullet]);
+  // Total payable at the full eligible loan — the bar's 100% reference, so the bar
+  // visibly grows and shrinks as you drag the loan amount.
+  const fullTotal = useMemo(() => (eligible ? payableFor(eligible).total : null), [plan, eligible, months, bullet]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold">Gold loan calculator</h1>
-          <p className="mt-1 text-muted-foreground">Estimate your eligible loan and repayment instantly — no details needed.</p>
+          <p className="mt-1 text-muted-foreground">Estimate your eligible loan and repayment instantly, no details needed.</p>
         </div>
         <div className="inline-flex items-center gap-3 self-start rounded-xl border bg-card px-4 py-2.5 sm:self-auto">
           <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
@@ -196,8 +201,8 @@ export function CalculatorPage() {
                   {/* principal vs interest split */}
                   <div className="space-y-2">
                     <div className="flex h-3 gap-0.5 overflow-hidden rounded-full bg-secondary">
-                      <div className="rounded-full bg-accent transition-all" style={{ width: `${(amount / breakdown.total) * 100}%` }} />
-                      <div className="rounded-full bg-primary transition-all" style={{ width: `${(breakdown.interest / breakdown.total) * 100}%` }} />
+                      <div className="rounded-full bg-accent transition-all duration-300" style={{ width: `${(amount / (fullTotal ?? breakdown.total)) * 100}%` }} />
+                      <div className="rounded-full bg-primary transition-all duration-300" style={{ width: `${(breakdown.interest / (fullTotal ?? breakdown.total)) * 100}%` }} />
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="flex items-center gap-1.5 text-muted-foreground">

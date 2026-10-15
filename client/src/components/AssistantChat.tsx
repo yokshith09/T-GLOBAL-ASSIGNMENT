@@ -15,9 +15,9 @@ import {
 import { formatRupees } from "@/lib/format";
 
 const SUGGESTIONS = [
-  "I have 45g of 22K jewellery — how much can I get?",
+  "I have 45g of 22K jewellery, how much can I get?",
   "What plans do you offer?",
-  "EMI or Bullet — what's the difference?",
+  "What's the difference between EMI and Bullet?",
 ];
 
 const TOOL_LABEL: Record<string, string> = {
@@ -86,14 +86,14 @@ export function AssistantChat() {
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {configured === false && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-            The assistant isn't configured yet — add an LLM API key (GEMINI_API_KEY) to the server .env.
+            The assistant isn't configured yet. Add an LLM API key (GEMINI_API_KEY) to the server .env.
           </div>
         )}
 
         {messages.length === 0 && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Ask in plain words — every figure is calculated by our backend, never guessed.
+              Ask in plain words. Every figure is calculated by our backend, never guessed.
             </p>
             <div className="flex flex-col gap-2">
               {SUGGESTIONS.map((s) => (
