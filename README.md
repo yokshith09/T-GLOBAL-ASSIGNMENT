@@ -75,8 +75,10 @@ the browser. Never commit real keys — `.env` is gitignored.
 
 ## Deployment
 The whole app (static frontend + the Express API as a serverless function) deploys as a single
-Vercel project — see [`docs/DEPLOY.md`](docs/DEPLOY.md) for the exact steps and the one
-Supabase-networking caveat serverless functions share with any other host.
+Vercel project — see [`docs/DEPLOY.md`](docs/DEPLOY.md) for the exact steps, a troubleshooting
+table for the usual first-deploy snags (env vars scoped to the wrong environment, the function
+not being found, a crash on startup), and the one Supabase-networking caveat serverless
+functions share with any other host.
 
 ## API
 Base path `/api/v1`. Errors share one shape: `{ error: { code, message, fields[] } }`.

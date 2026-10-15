@@ -76,3 +76,33 @@ Regression coverage: `server/tests/api.test.ts` → "valid lead → 201 with app
 masked mobile" (asserts `216562`), backed by the unit test
 `server/tests/quote.test.ts` → "money is whole rupees (floored, never rounded up)" which pins
 `₹2,16,562.50 → 216562`.
+
+## A second place the AI got it wrong (deployment)
+
+**What it did wrong.** The first Vercel serverless entry point was named `api/[...path].ts` —
+bracket catch-all routing. That naming convention is **Next.js's own file-based router**, not a
+guarantee of Vercel's plain Serverless Functions platform. On a non-Next.js project it produced
+a consistent **404** on every API request in production, even though the file built and
+typechecked cleanly locally.
+
+**How it was spotted.** Not by a test — by reading the actual live deployment's network
+requests after the user reported the error, which showed `GET
+https://…/api/v1/loan-schemes → 404` instead of reaching the function at all.
+
+**The fix.** Renamed to a plain `api/index.ts` (a single named function) and added an explicit
+`vercel.json` rewrite (`"/api/(.*)" → "/api"`) so every `/api/*` request is routed to it by name,
+with no dependence on bracket-folder inference. This is the standard, unambiguous
+"Express-on-Vercel" pattern.
+
+A related second deploy-only issue, same root habit (assuming a step runs where it should,
+without confirming): `prisma generate` was first wired as a root `postinstall` script, betting
+on install-time ordering that wasn't actually verified against this specific platform. After the
+routing fix, the function still crashed on every request (`FUNCTION_INVOCATION_FAILED`) — the
+classic signature of `@prisma/client` being imported before it's generated. Fixed by running
+`prisma generate` explicitly as the first step of `vercel.json`'s own `buildCommand`, a step
+Vercel is guaranteed to run, rather than relying on `postinstall` firing at the right time.
+
+Neither of these had a meaningful local test to catch them — they're platform-integration
+issues, not application-logic ones. The real lesson: deployment plumbing deserves the same "run
+it for real before claiming it works" discipline as application code, not just a clean local
+`tsc` pass.

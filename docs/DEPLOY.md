@@ -18,19 +18,31 @@ running as one serverless function. No Docker, no second host.
    | `GROQ_API_KEY` / `GROQ_MODEL` | your key / `openai/gpt-oss-20b` |
    | `VITE_API_BASE_URL` | `/api/v1` — **relative**, since the API now lives on the same domain |
 
-3. Deploy. `npm install` at the root runs a `postinstall` that generates the Prisma client
-   before the API function is bundled — no extra build step needed.
+   **Important:** check the environment checkboxes on every var — Vercel scopes each one to
+   Production / Preview / Development independently, and a var saved with only "Preview" ticked
+   will not exist in your live site's build, which is a very easy mistake to make and produces
+   confusing failures (the live site silently falling back to `localhost:4000`, or the API
+   function crashing because `DATABASE_URL` is empty). Tick **Production** on every var above.
+3. Deploy. `vercel.json`'s `buildCommand` runs `prisma generate` before building the client, so
+   the API function has a generated Prisma Client to import.
 4. Run the migration once against your Supabase database from wherever you can reach it
    (locally, or let `npm run eval`'s CI job apply it): `npx prisma migrate deploy --schema
    server/prisma/schema.prisma`, then `npm run db:seed`.
+5. **After changing any env var, redeploy** (Deployments → ⋯ → Redeploy). Vite inlines
+   `VITE_*` vars at build time, and the API function only reads `process.env` fresh on a new
+   build/deploy — saving a variable alone does not update an already-built deployment.
 
 ### How it's wired
-- `api/[...path].ts` is a Vercel catch-all function: every request under `/api/*` reaches it,
-  and it simply exports the **same Express app** (`server/src/app.ts`) used for local dev — no
-  route duplication, no behaviour difference. Vercel forwards the full original path, so the
+- `api/index.ts` is a single named Vercel Serverless Function. `vercel.json` explicitly
+  rewrites every request under `/api/*` to it (`"/api/(.*)" → "/api"`), and it exports the
+  **same Express app** (`server/src/app.ts`) used for local dev — no route duplication, no
+  behaviour difference. Vercel preserves the original path as `req.url` on a rewrite, so the
   app's own `/api/v1/...` routing matches exactly as it does on `localhost:4000`.
-- `vercel.json`'s rewrite sends every non-`/api` path to `index.html`, so client-side routes
-  (`/dashboard/apply`, `/calculator`, …) work on refresh and on a shared link.
+  (An earlier version of this file was named `api/[...path].ts` — Next.js's bracket catch-all
+  convention, which doesn't reliably apply on a plain, non-Next.js Vercel project and produced a
+  404 on every request. See `AI_LOG.md` for the full story.)
+- `vercel.json`'s second rewrite sends every non-`/api` path to `index.html`, so client-side
+  routes (`/dashboard/apply`, `/calculator`, …) work on refresh and on a shared link.
 - Prisma + Supabase's pooled connection (`pgbouncer=true`) is the standard, supported pairing
   for serverless — each function invocation borrows a pooled connection rather than opening a
   fresh one.
@@ -47,6 +59,15 @@ If you'd rather keep the API on a traditional long-running Node process (Render,
 `client/`). Point `VITE_API_BASE_URL` at the other host's `/api/v1`, and on that host: build
 `npm install && npm run build`, start `npm start`, and set the same env vars as above (minus
 `VITE_API_BASE_URL`). Run the migration + seed there too.
+
+## Troubleshooting a Vercel deploy
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| "Couldn't load loan plans", network tab shows a request to `localhost:4000` | `VITE_API_BASE_URL` wasn't applied to this build | Check it's set for **Production**, then redeploy |
+| Request reaches `yoursite.vercel.app/api/...` but returns **404** | The API function isn't being found/routed | Confirm `api/index.ts` exists (not a bracket-named file) and `vercel.json`'s `/api/(.*)` rewrite is present |
+| Request returns **500** with Vercel's own "FUNCTION_INVOCATION_FAILED" page (not our JSON error body) | The function crashed on startup — almost always `DATABASE_URL` missing/empty in Production, or `@prisma/client` not generated for this build | Check every backend env var has **Production** ticked; confirm `vercel.json`'s `buildCommand` includes `prisma generate` |
+| Request returns **500** with our own JSON body (`{"error":{"code":"INTERNAL_ERROR",...}}`) | The function started fine but a request-time call failed (e.g. Supabase unreachable) | Check the Function's runtime logs in the Vercel dashboard for the real error |
 
 ## CORS
 The API currently enables permissive CORS for the demo (`server/src/app.ts`). On the unified
