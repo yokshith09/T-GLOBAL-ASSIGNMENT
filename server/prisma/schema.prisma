@@ -58,7 +58,7 @@ enum LeadSource {
 model LeadStatusAudit {
   id     String      @id @default(cuid())
   leadId String
-  lead   Lead        @relation(fields: [leadId], references: [id])
+  lead   Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   from   LeadStatus?
   to     LeadStatus
   at     DateTime    @default(now())
