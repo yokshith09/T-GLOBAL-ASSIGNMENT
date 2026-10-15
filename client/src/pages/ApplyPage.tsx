@@ -37,19 +37,25 @@ export function ApplyPage() {
   const [selectedPlan, setSelectedPlan] = useState<string>("");
   const [quote, setQuote] = useState<Quote | null>(null);
   const [quoting, setQuoting] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [retryTick, setRetryTick] = useState(0);
+  const [schemesError, setSchemesError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<LeadCreated | null>(null);
   const [duplicate, setDuplicate] = useState<{ applicationId?: string; appliedAt?: string } | null>(null);
 
-  // Load plans once.
-  useEffect(() => {
+  const loadSchemes = () => {
+    setSchemesError(false);
     getSchemes()
       .then((s) => {
         setSchemes(s);
         setSelectedPlan((prev) => prev || s[0]?.id || "");
       })
-      .catch(() => setSchemes([]));
-  }, []);
+      .catch(() => setSchemesError(true));
+  };
+
+  // Load plans once.
+  useEffect(loadSchemes, []);
 
   // Live quote on step 2, debounced 300ms.
   useEffect(() => {
@@ -58,14 +64,25 @@ export function ApplyPage() {
     const gross = Number(form.gross);
     if (!(net > 0 && gross > 0 && net <= gross)) return;
     setQuoting(true);
+    setQuoteError(null);
     const t = setTimeout(() => {
       postQuote({ netWeightGrams: net, grossWeightGrams: gross, karat: form.karat })
-        .then(setQuote)
-        .catch(() => setQuote(null))
+        .then((q) => {
+          setQuote(q);
+          setQuoteError(null);
+        })
+        .catch((err) => {
+          setQuote(null);
+          setQuoteError(
+            err instanceof ApiException ? err.error.message : "Couldn't reach the server for a live quote.",
+          );
+        })
         .finally(() => setQuoting(false));
     }, 300);
     return () => clearTimeout(t);
-  }, [step, form.net, form.gross, form.karat]);
+  }, [step, form.net, form.gross, form.karat, retryTick]);
+
+  const retryQuote = () => setRetryTick((t) => t + 1);
 
   // Show only the errors for fields the user has already left (touched).
   const showErrors = (f: FormValues, t: typeof touched) => {
@@ -160,6 +177,13 @@ export function ApplyPage() {
           <div className="space-y-6">
             <Stepper current={step} />
 
+            {schemesError && (
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                <span>Couldn't load loan plans. Check the server connection.</span>
+                <Button type="button" size="sm" variant="outline" onClick={loadSchemes}>Retry</Button>
+              </div>
+            )}
+
             {step === 0 && (
               <Card>
                 <CardContent className="space-y-5 pt-6">
@@ -200,6 +224,12 @@ export function ApplyPage() {
 
             {step === 1 && (
               <div className="space-y-5">
+                {quoteError && (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                    <span>{quoteError}</span>
+                    <Button type="button" size="sm" variant="outline" onClick={retryQuote}>Retry</Button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <Tile icon={Scale} label="Pure gold"
                     value={quote ? `${quote.pureGoldGrams} g` : "—"} />

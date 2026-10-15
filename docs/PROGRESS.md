@@ -4,7 +4,36 @@ A running record of what's built and what remains. Newest checkpoint on top.
 
 ---
 
-## ✅ Checkpoint — 2026-10-15 (current)
+## ✅ Checkpoint — 2026-10-15 (current, post-verification)
+
+### This checkpoint's work
+- **Routes restructured to nested:** `/dashboard/apply`, `/dashboard/assistant` (new dedicated
+  chat page), `/dashboard/admin`. `/calculator` stays top-level (no account needed). Legacy
+  flat paths (`/apply`, `/assistant`, `/admin`) redirect for back-compat.
+- **Fixed a real bug:** the live-quote and plan-list fetches failed silently on error (network
+  or server issue) — the UI just showed `—` forever with no explanation. Now shows a clear
+  error banner with a **Retry** button, in both Apply and the Calculator.
+- **Fixed a stale test:** `agent.test.ts` still asserted exactly 3 tools after the bonus 4th
+  tool was added.
+- **Full requirements verification run** against the user's 28-item checklist — see
+  [`../VERIFICATION_REPORT.md`](../VERIFICATION_REPORT.md) for the complete table, evidence,
+  and exact blocked/passed classification. Headline: 10 requirements PASS (automated, run this
+  session), 9 PASS (code inspection), 10 BLOCKED (Supabase unreachable from this network during
+  this session — confirmed three ways, not a code defect), 1 PASS (historical, not reconfirmed
+  this session).
+- Removed `docs/DEMO.md` from the repo per request.
+- Docs updated: README (frontend routes, new endpoints), `docs/EVAL.md` (6th prompt-injection
+  scenario, 4-tool list documented).
+
+### Open item carried forward
+- Re-run `npm test` and `npm run eval` once Supabase is reachable again, to move the 10
+  BLOCKED items in `VERIFICATION_REPORT.md` to PASS/FAIL with fresh evidence — this is
+  especially important because the lead-service and routes were rewritten for B1 hardening
+  (idempotency, advisory-lock dedupe) **after** the last confirmed live pass.
+
+---
+
+## ✅ Checkpoint — 2026-10-15 (bonuses + palette)
 
 ### Required scope — complete & verified
 - **Phase 0 — Scaffold:** npm-workspaces monorepo (server + client), `npm install/dev/test` work.
@@ -49,7 +78,7 @@ A running record of what's built and what remains. Newest checkpoint on top.
   eval scenario (6/6); the system prompt refuses override attempts. (Streaming not done.)
 - **B4 — Ops (partial):** **rate limit** on `/leads` (20/min/IP), **GitHub Actions CI**
   (`.github/workflows/ci.yml`, spins its own Postgres), **`ARCHITECTURE.md`**, **Vercel** config +
-  `docs/DEPLOY.md`, and a **2-minute demo script** (`docs/DEMO.md`). Docker skipped (deploying on Vercel).
+  `docs/DEPLOY.md`. Docker skipped (deploying on Vercel).
 
 Bonus tests live in `server/tests/bonus.test.ts` (idempotency, parallel race, status workflow, gold-rate).
 

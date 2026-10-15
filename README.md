@@ -83,12 +83,26 @@ Base path `/api/v1`. Errors share one shape: `{ error: { code, message, fields[]
 | GET | `/leads` | Newest first, mobile masked, `?schemeId=` filter. |
 | POST | `/agent/chat` | Runs the LLM + tools server-side. |
 | POST | `/agent/confirm` | Files a lead the user confirmed in chat. |
+| PATCH | `/leads/:applicationId/status` | Status workflow transition + audit log entry. |
+| GET | `/leads/:applicationId/audit` | Status change history for one lead. |
+| GET | `/gold-rate` | Cached 24K rate. |
+
+## Frontend routes
+```
+/                      Public landing (hero, how it works, FAQ)
+/calculator            Public gold-loan calculator (no account needed)
+/dashboard/apply       3-step application form
+/dashboard/assistant   Dedicated Loan Assist chat page
+/dashboard/admin       Leads table (passcode-gated)
+```
+A floating Loan Assist launcher is also available on every `/dashboard/*` and `/calculator`
+page for a quick chat without leaving the current screen.
 
 ## Project layout
 ```
 server/   Express API, Prisma schema + seed, domain maths, services, agent, tests
-client/   React + Vite SPA (Apply, Assistant, Admin)
-docs/     plan, TRD, UI/UX & flow, agent evals
+client/   React + Vite SPA (landing, calculator, apply, assistant, admin)
+docs/     plan, TRD, UI/UX & flow, architecture, deploy, agent evals, progress
 ```
 
 ## Status
@@ -109,7 +123,7 @@ provider: `GET https://api.groq.com/openai/v1/models` (Bearer key) and
 - **Status workflow** `SUBMITTED → UNDER_REVIEW → APPROVED/REJECTED` + audit log, with admin controls.
 - **Cached gold-rate endpoint** `GET /gold-rate`.
 - **Agent:** 4th tool `check_existing_application`; prompt-injection resistance (eval 6/6).
-- **Ops:** rate limit on `/leads`, **GitHub Actions CI** (own Postgres), `ARCHITECTURE.md`, Vercel config + `docs/DEPLOY.md`, demo script (`docs/DEMO.md`). Provider fallback Gemini → Groq.
+- **Ops:** rate limit on `/leads`, **GitHub Actions CI** (own Postgres), `ARCHITECTURE.md`, Vercel config + `docs/DEPLOY.md`. Provider fallback Gemini → Groq.
 - Skipped (low ROI, over the +15 cap): slip OCR, NL admin filter, streaming, pagination.
 
 ## What I'd do with more time

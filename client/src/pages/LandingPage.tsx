@@ -39,7 +39,7 @@ export function LandingPage() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button asChild size="sm">
-              <Link to="/apply">Get estimate <ArrowRight className="h-4 w-4" /></Link>
+              <Link to="/dashboard/apply">Get estimate <ArrowRight className="h-4 w-4" /></Link>
             </Button>
           </div>
         </div>
@@ -62,7 +62,7 @@ export function LandingPage() {
               </p>
               <div className="anim-fade-up mt-8 flex flex-wrap gap-3" style={{ animationDelay: "280ms" }}>
                 <Button asChild size="lg">
-                  <Link to="/apply">Get my estimate <ArrowRight className="h-4 w-4" /></Link>
+                  <Link to="/dashboard/apply">Get my estimate <ArrowRight className="h-4 w-4" /></Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
                   <Link to="/calculator"><Calculator className="h-4 w-4" /> Try the calculator</Link>
@@ -129,6 +129,9 @@ export function LandingPage() {
                   <span className="rounded-full border bg-background px-3 py-1">No investment advice</span>
                   <span className="rounded-full border bg-background px-3 py-1">Confirms before filing</span>
                 </div>
+                <Button asChild className="mt-5">
+                  <Link to="/dashboard/assistant"><MessageSquare className="h-4 w-4" /> Chat with Loan Assist</Link>
+                </Button>
               </div>
               <div className="hidden shrink-0 place-items-center sm:grid">
                 <span className="anim-float grid h-28 w-28 place-items-center rounded-3xl bg-accent text-accent-foreground shadow-lg shadow-accent/20">
@@ -233,8 +236,8 @@ export function LandingPage() {
               <FaqList items={FAQS} />
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              Still unsure? Open the form and tap{" "}
-              <Link to="/apply" className="font-medium text-accent underline underline-offset-4">Loan Assist</Link>
+              Still unsure? Chat with{" "}
+              <Link to="/dashboard/assistant" className="font-medium text-accent underline underline-offset-4">Loan Assist</Link>
               . It answers and can start your application.
             </p>
           </section>
@@ -247,7 +250,7 @@ export function LandingPage() {
             </p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" variant="secondary">
-                <Link to="/apply">Start now <ArrowRight className="h-4 w-4" /></Link>
+                <Link to="/dashboard/apply">Start now <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-accent-foreground/30 bg-transparent text-accent-foreground hover:bg-accent-foreground/10 hover:text-accent-foreground">
                 <Link to="/calculator"><Calculator className="h-4 w-4" /> Open calculator</Link>

@@ -5,9 +5,14 @@ import { prisma } from "../src/lib/prisma.js";
 afterAll(() => prisma.$disconnect());
 
 describe("agent tools", () => {
-  it("exposes exactly the three required tools", () => {
+  it("exposes the 3 required tools plus the check_existing_application bonus tool", () => {
     const names = toolSchemas.map((t) => t.function.name).sort();
-    expect(names).toEqual(["calculate_quote", "get_loan_schemes", "submit_application"]);
+    expect(names).toEqual([
+      "calculate_quote",
+      "check_existing_application",
+      "get_loan_schemes",
+      "submit_application",
+    ]);
   });
 
   it("calculate_quote returns tool-computed numbers (not the model's)", async () => {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { type Quote, type Scheme, getSchemes, postQuote } from "@/lib/api";
+import { ApiException, type Quote, type Scheme, getSchemes, postQuote } from "@/lib/api";
 import { formatRupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,12 @@ export function CalculatorPage() {
     setLoading(true);
     const t = setTimeout(() => {
       postQuote({ netWeightGrams: n, grossWeightGrams: g, karat })
-        .then(setQuote).catch(() => setQuote(null)).finally(() => setLoading(false));
+        .then(setQuote)
+        .catch((e) => {
+          setQuote(null);
+          setErr(e instanceof ApiException ? e.error.message : "Couldn't reach the server for a live estimate.");
+        })
+        .finally(() => setLoading(false));
     }, 300);
     return () => clearTimeout(t);
   }, [net, gross, karat]);
@@ -225,7 +230,7 @@ export function CalculatorPage() {
           </Card>
 
           <Button className="w-full" size="lg" disabled={!quote}
-            onClick={() => navigate("/apply", { state: { net, gross, karat } })}>
+            onClick={() => navigate("/dashboard/apply", { state: { net, gross, karat } })}>
             Apply with these details <ArrowRight className="h-4 w-4" />
           </Button>
           <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
