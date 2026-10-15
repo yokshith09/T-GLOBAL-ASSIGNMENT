@@ -4,45 +4,45 @@
 
 @layer base {
   :root {
-    /* Warm ivory canvas + deep vault-green ink + antique gold */
-    --background: 45 33% 97%;
-    --foreground: 155 42% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 155 42% 10%;
-    --primary: 40 62% 44%; /* antique gold */
-    --primary-foreground: 45 40% 98%;
-    --secondary: 150 18% 93%;
-    --secondary-foreground: 155 35% 14%;
-    --muted: 150 16% 94%;
-    --muted-foreground: 155 10% 38%;
-    --accent: 160 58% 20%; /* emerald */
-    --accent-foreground: 45 40% 98%;
-    --destructive: 2 68% 46%;
+    /* Warm porcelain canvas, deep jewel-emerald ink, luminous 22k gold */
+    --background: 42 42% 98%;
+    --foreground: 165 46% 8%;
+    --card: 40 44% 99%;
+    --card-foreground: 165 46% 8%;
+    --primary: 38 74% 47%; /* luminous gold */
+    --primary-foreground: 42 50% 99%;
+    --secondary: 150 24% 93%;
+    --secondary-foreground: 164 38% 13%;
+    --muted: 146 20% 94%;
+    --muted-foreground: 162 11% 34%;
+    --accent: 164 62% 16%; /* deep jewel emerald */
+    --accent-foreground: 42 46% 98%;
+    --destructive: 4 72% 47%;
     --destructive-foreground: 0 0% 100%;
-    --border: 150 14% 88%;
-    --input: 150 14% 86%;
-    --ring: 40 62% 44%;
-    --radius: 0.5rem;
+    --border: 148 18% 88%;
+    --input: 148 18% 85%;
+    --ring: 38 74% 47%;
+    --radius: 0.625rem;
   }
   .dark {
-    /* Deep vault-green near-black, warmer ink, brighter gold for contrast */
-    --background: 158 30% 5%;
-    --foreground: 44 32% 93%;
-    --card: 156 22% 9%;
-    --card-foreground: 44 32% 93%;
-    --primary: 40 74% 60%;
-    --primary-foreground: 156 40% 7%;
-    --secondary: 156 16% 15%;
-    --secondary-foreground: 44 28% 92%;
-    --muted: 156 14% 14%;
-    --muted-foreground: 150 10% 66%;
-    --accent: 158 46% 44%;
-    --accent-foreground: 156 40% 6%;
-    --destructive: 2 62% 52%;
+    /* Deep emerald-black vault, warm ink, bright luminous gold */
+    --background: 164 36% 4.5%;
+    --foreground: 42 38% 94%;
+    --card: 162 26% 8.5%;
+    --card-foreground: 42 38% 94%;
+    --primary: 40 86% 64%;
+    --primary-foreground: 162 44% 7%;
+    --secondary: 160 20% 14%;
+    --secondary-foreground: 42 34% 93%;
+    --muted: 160 18% 13%;
+    --muted-foreground: 150 13% 68%;
+    --accent: 160 56% 48%;
+    --accent-foreground: 162 44% 6%;
+    --destructive: 4 66% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 156 12% 20%;
-    --input: 156 12% 22%;
-    --ring: 40 74% 60%;
+    --border: 160 16% 19%;
+    --input: 160 16% 21%;
+    --ring: 40 86% 64%;
   }
 }
 
@@ -57,15 +57,20 @@
 }
 
 @layer utilities {
-  /* Warm gold-into-ivory wash behind the hero */
+  /* Gold-and-emerald wash behind the hero */
   .hero-glow {
     background:
-      radial-gradient(60% 55% at 78% 18%, hsl(40 70% 55% / 0.14), transparent 70%),
-      radial-gradient(45% 40% at 10% 0%, hsl(160 45% 35% / 0.08), transparent 70%);
+      radial-gradient(58% 55% at 80% 12%, hsl(40 82% 56% / 0.22), transparent 68%),
+      radial-gradient(50% 48% at 6% 4%, hsl(164 58% 30% / 0.12), transparent 70%),
+      radial-gradient(90% 60% at 50% 120%, hsl(40 70% 55% / 0.06), transparent 70%);
   }
   .text-gold {
-    background: linear-gradient(95deg, hsl(40 62% 40%), hsl(38 72% 52%));
+    background: linear-gradient(104deg, hsl(40 82% 43%), hsl(34 92% 57%));
     -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  /* Subtle gold sheen on primary buttons for a premium feel */
+  .btn-gold {
+    background-image: linear-gradient(180deg, hsl(40 78% 52%), hsl(37 74% 45%));
   }
 
   @keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
