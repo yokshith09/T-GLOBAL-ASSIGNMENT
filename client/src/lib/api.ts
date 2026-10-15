@@ -76,6 +76,22 @@ export type Lead = {
 export const getSchemes = () => request<Scheme[]>("/loan-schemes");
 export const getLeads = (schemeId?: string) =>
   request<Lead[]>(`/leads${schemeId ? `?schemeId=${encodeURIComponent(schemeId)}` : ""}`);
+
+// ---- Agent ----
+export type ChatMessage = { role: "user" | "assistant"; content: string };
+export type ToolEvent = { tool: string; status: "ok" | "error" };
+export type PendingConfirmation = { payload: LeadRequest; eligibleLoanRupees: number };
+export type ChatResult = {
+  reply: string;
+  toolEvents: ToolEvent[];
+  pendingConfirmation?: PendingConfirmation;
+};
+
+export const getAgentStatus = () => request<{ configured: boolean }>("/agent/status");
+export const postAgentChat = (messages: ChatMessage[]) =>
+  request<ChatResult>("/agent/chat", { method: "POST", body: JSON.stringify({ messages }) });
+export const postAgentConfirm = (payload: LeadRequest) =>
+  request<LeadCreated>("/agent/confirm", { method: "POST", body: JSON.stringify({ payload }) });
 export const postQuote = (input: QuoteRequest) =>
   request<Quote>("/quotes", { method: "POST", body: JSON.stringify(input) });
 export const postLead = (input: LeadRequest) =>
