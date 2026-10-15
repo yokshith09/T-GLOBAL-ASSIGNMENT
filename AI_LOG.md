@@ -89,18 +89,19 @@ typechecked cleanly locally.
 requests after the user reported the error, which showed `GET
 https://…/api/v1/loan-schemes → 404` instead of reaching the function at all.
 
-**The fix.** Renamed to a plain `api/index.ts` (a single named function) and added an explicit
+**The fix.** Renamed to a plain named function (`api/index.*`, no brackets) and added an explicit
 `vercel.json` rewrite (`"/api/(.*)" → "/api"`) so every `/api/*` request is routed to it by name,
 with no dependence on bracket-folder inference. This is the standard, unambiguous
 "Express-on-Vercel" pattern.
 
-A related second deploy-only issue, same root habit (assuming a step runs where it should,
-without confirming): `prisma generate` was first wired as a root `postinstall` script, betting
-on install-time ordering that wasn't actually verified against this specific platform. After the
-routing fix, the function still crashed on every request (`FUNCTION_INVOCATION_FAILED`) — the
-classic signature of `@prisma/client` being imported before it's generated. Fixed by running
-`prisma generate` explicitly as the first step of `vercel.json`'s own `buildCommand`, a step
-Vercel is guaranteed to run, rather than relying on `postinstall` firing at the right time.
+A related second deploy-only issue, same root habit (assuming instead of checking): after the
+routing fix the function still crashed on every request (`FUNCTION_INVOCATION_FAILED`). The AI
+first guessed Prisma Client generation, but the build log showed generation succeeding, so
+that guess was wrong. The real cause: the root `package.json` has no `"type": "module"`, so
+Vercel compiled `api/index.ts` as CommonJS while it imported the server's ESM TypeScript, and
+the function died on load. Fixed with a plain ESM `api/index.mjs` that imports the
+tsc-compiled server (`server/dist`), smoke-tested locally against `/api/v1/gold-rate` before
+pushing, then confirmed live (`/api/v1/loan-schemes` → 200).
 
 Neither of these had a meaningful local test to catch them — they're platform-integration
 issues, not application-logic ones. The real lesson: deployment plumbing deserves the same "run
