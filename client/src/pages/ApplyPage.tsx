@@ -1,6 +1,6 @@
-import { CheckCircle2, Coins, Loader2, Scale, ShieldCheck, Sparkles } from "lucide-react";
+import { Check, CheckCircle2, CircleAlert, Coins, Loader2, Scale, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Stepper } from "@/components/Stepper";
 import { Tile } from "@/components/Tile";
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,22 @@ import {
   postQuote,
 } from "@/lib/api";
 import { formatRupees } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { type FieldErrors, type FormValues, hasErrors, validateDetails } from "@/lib/validation";
 
 const KARATS = [18, 22, 24] as const;
 const EMPTY: FormValues = { name: "", mobile: "", gross: "", net: "", karat: 22 };
 
+type Prefill = { net?: string; gross?: string; karat?: number };
+
 export function ApplyPage() {
+  const prefill = (useLocation().state as Prefill | null) ?? null;
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormValues>(EMPTY);
+  const [form, setForm] = useState<FormValues>(() =>
+    prefill ? { ...EMPTY, net: prefill.net ?? "", gross: prefill.gross ?? "", karat: prefill.karat ?? 22 } : EMPTY,
+  );
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof FieldErrors, boolean>>>({});
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<string>("");
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -60,12 +67,39 @@ export function ApplyPage() {
     return () => clearTimeout(t);
   }, [step, form.net, form.gross, form.karat]);
 
-  const set = (key: keyof FormValues, value: string | number) =>
-    setForm((f) => ({ ...f, [key]: value }));
+  // Show only the errors for fields the user has already left (touched).
+  const showErrors = (f: FormValues, t: typeof touched) => {
+    const all = validateDetails(f);
+    const shown: FieldErrors = {};
+    for (const k of Object.keys(all) as (keyof FieldErrors)[]) if (t[k]) shown[k] = all[k];
+    setErrors(shown);
+  };
+
+  const fieldKey = (k: keyof FormValues): keyof FieldErrors | null =>
+    k === "name" || k === "mobile" || k === "gross" || k === "net" ? k : null;
+
+  const set = (key: keyof FormValues, value: string | number) => {
+    const next = { ...form, [key]: value };
+    setForm(next);
+    const fk = fieldKey(key);
+    if (fk && touched[fk]) showErrors(next, touched); // live-clear once touched
+  };
+
+  // Verify a field as soon as the user leaves it, before the next one.
+  const blur = (key: keyof FormValues) => {
+    const fk = fieldKey(key);
+    if (!fk) return;
+    const t = { ...touched, [fk]: true };
+    setTouched(t);
+    showErrors(form, t);
+  };
+
+  const isValid = (fk: keyof FieldErrors, raw: string) => !!touched[fk] && !errors[fk] && raw.trim() !== "";
 
   const goToQuote = () => {
     const e = validateDetails(form);
     setErrors(e);
+    setTouched({ name: true, mobile: true, gross: true, net: true });
     if (!hasErrors(e)) setStep(1);
   };
 
@@ -112,15 +146,11 @@ export function ApplyPage() {
     <div className="grid gap-8 lg:grid-cols-[1fr_minmax(0,22rem)]">
       <div className="order-2 lg:order-1">
         <header className="mb-6">
-          <h1 className="font-display text-3xl font-semibold leading-tight">
-            A preliminary gold-loan offer in minutes.
-          </h1>
+          <h1 className="font-display text-3xl font-semibold leading-tight">Apply for a gold loan</h1>
           <p className="mt-2 max-w-prose text-muted-foreground">
-            Enter your jewellery details for a live estimate, or{" "}
-            <Link to="/assistant" className="font-medium text-accent underline underline-offset-4">
-              chat with Loan Assist
-            </Link>
-            . The same numbers either way.
+            Enter your jewellery details for a live estimate — or tap{" "}
+            <span className="font-medium text-accent">Loan Assist</span> (bottom-right) to do it by chat.
+            The same numbers either way.
           </p>
         </header>
 
@@ -134,15 +164,22 @@ export function ApplyPage() {
               <Card>
                 <CardContent className="space-y-5 pt-6">
                   <Field id="name" label="Full name" placeholder="Asha Rao" value={form.name}
-                    error={errors.name} onChange={(v) => set("name", v)} />
+                    hint="Letters and spaces, 2–60 characters" error={errors.name}
+                    valid={isValid("name", form.name)}
+                    onChange={(v) => set("name", v)} onBlur={() => blur("name")} />
                   <Field id="mobile" label="Mobile number" placeholder="9876543210" inputMode="numeric"
-                    maxLength={10} value={form.mobile} error={errors.mobile}
-                    onChange={(v) => set("mobile", v.replace(/\D/g, ""))} />
+                    maxLength={10} value={form.mobile} hint="10 digits, starting 6–9" error={errors.mobile}
+                    valid={isValid("mobile", form.mobile)}
+                    onChange={(v) => set("mobile", v.replace(/\D/g, ""))} onBlur={() => blur("mobile")} />
                   <div className="grid grid-cols-2 gap-4">
                     <Field id="gross" label="Gross weight (g)" placeholder="46" inputMode="decimal"
-                      value={form.gross} error={errors.gross} onChange={(v) => set("gross", v)} />
+                      value={form.gross} hint="In grams, up to 1000" error={errors.gross}
+                      valid={isValid("gross", form.gross)}
+                      onChange={(v) => set("gross", v)} onBlur={() => blur("gross")} />
                     <Field id="net" label="Net weight (g)" placeholder="45" inputMode="decimal"
-                      value={form.net} error={errors.net} onChange={(v) => set("net", v)} />
+                      value={form.net} hint="In grams, ≤ gross" error={errors.net}
+                      valid={isValid("net", form.net)}
+                      onChange={(v) => set("net", v)} onBlur={() => blur("net")} />
                   </div>
                   <div className="space-y-2">
                     <Label>Karat</Label>
@@ -288,23 +325,39 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Field({ id, label, error, value, onChange, ...rest }: {
+function Field({ id, label, hint, error, valid, value, onChange, onBlur, ...rest }: {
   id: string;
   label: string;
+  hint?: string;
   error?: string;
+  valid?: boolean;
   value: string;
   onChange: (v: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   inputMode?: "text" | "numeric" | "decimal";
   maxLength?: number;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} value={value} aria-invalid={!!error}
-        aria-describedby={error ? `${id}-err` : undefined}
-        onChange={(e) => onChange(e.target.value)} {...rest} />
-      {error && <p id={`${id}-err`} className="text-xs text-destructive">{error}</p>}
+      <div className="relative">
+        <Input id={id} value={value} aria-invalid={!!error}
+          aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined}
+          onChange={(e) => onChange(e.target.value)} onBlur={onBlur}
+          className={cn((valid || error) && "pr-9", valid && "border-accent/60", error && "border-destructive")}
+          {...rest} />
+        {error ? (
+          <CircleAlert className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-destructive" />
+        ) : valid ? (
+          <Check className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
+        ) : null}
+      </div>
+      {error ? (
+        <p id={`${id}-err`} className="text-xs text-destructive">{error}</p>
+      ) : hint ? (
+        <p id={`${id}-hint`} className="text-xs text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   );
 }
