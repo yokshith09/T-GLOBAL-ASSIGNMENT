@@ -103,11 +103,14 @@ names to the live defaults. To re-check which models your key can use, list them
 provider: `GET https://api.groq.com/openai/v1/models` (Bearer key) and
 `GET https://generativelanguage.googleapis.com/v1beta/models?key=…`.
 
-## Bonuses attempted
-- **Status workflow groundwork** — `LeadStatus` enum + `LeadStatusAudit` table in the schema (not yet exposed via an endpoint).
-- **Idempotency groundwork** — `IdempotencyKey` model in the schema (header handling not yet wired).
-- **Provider fallback** — Gemini → Groq, so the agent degrades gracefully.
-- Not yet done: Idempotency-Key handling, race-safe duplicates, Docker, CI, slip OCR, streaming.
+## Bonuses implemented
+- **Idempotency-Key** on `POST /leads` (replays the original response — case 7).
+- **Race-safe duplicates** via a per-mobile advisory lock (parallel → one 201 + one 409 — case 8).
+- **Status workflow** `SUBMITTED → UNDER_REVIEW → APPROVED/REJECTED` + audit log, with admin controls.
+- **Cached gold-rate endpoint** `GET /gold-rate`.
+- **Agent:** 4th tool `check_existing_application`; prompt-injection resistance (eval 6/6).
+- **Ops:** rate limit on `/leads`, **GitHub Actions CI** (own Postgres), `ARCHITECTURE.md`, Vercel config + `docs/DEPLOY.md`, demo script (`docs/DEMO.md`). Provider fallback Gemini → Groq.
+- Skipped (low ROI, over the +15 cap): slip OCR, NL admin filter, streaming, pagination.
 
 ## What I'd do with more time
 - Finish B1: `Idempotency-Key` on `POST /leads`, a DB unique constraint for race-safe dedupe,

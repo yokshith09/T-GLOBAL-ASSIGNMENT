@@ -1,7 +1,11 @@
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
+import { z } from "zod";
 import { QuoteInput } from "../schemas/loan.js";
 import { listActiveSchemes } from "../services/schemeService.js";
 import { getQuote } from "../services/quoteService.js";
+import { findRecentApplication } from "../services/leadService.js";
+
+const MobileArg = z.object({ mobileNumber: z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number.") });
 
 /**
  * The agent's tools. The LLM never does arithmetic — every number comes from
@@ -31,6 +35,20 @@ export const toolSchemas: ChatCompletionTool[] = [
           karat: { type: "number", enum: [18, 22, 24], description: "Gold purity in karat." },
         },
         required: ["netWeightGrams", "grossWeightGrams", "karat"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_existing_application",
+      description:
+        "Check whether this mobile already has an application in the last 7 days, before quoting or submitting.",
+      parameters: {
+        type: "object",
+        properties: { mobileNumber: { type: "string", description: "10-digit Indian mobile number." } },
+        required: ["mobileNumber"],
         additionalProperties: false,
       },
     },
@@ -69,6 +87,13 @@ export async function runReadTool(name: string, rawArgs: unknown): Promise<unkno
       return { error: parsed.error.issues.map((i) => ({ field: i.path.join("."), message: i.message })) };
     }
     return await getQuote(parsed.data);
+  }
+  if (name === "check_existing_application") {
+    const parsed = MobileArg.safeParse(rawArgs);
+    if (!parsed.success) {
+      return { error: parsed.error.issues.map((i) => ({ field: i.path.join("."), message: i.message })) };
+    }
+    return await findRecentApplication(parsed.data.mobileNumber);
   }
   return { error: `Unknown tool: ${name}` };
 }

@@ -35,15 +35,25 @@ A running record of what's built and what remains. Newest checkpoint on top.
 
 ---
 
+## ✅ Bonuses implemented (maxes the +15 cap)
+
+- **B1 — Harden backend (complete):**
+  - `Idempotency-Key` on `POST /leads` — replays the original response (brief case 7).
+  - **Race-safe duplicates** — per-mobile `pg_advisory_xact_lock` in a transaction; parallel
+    requests give exactly one 201 + one 409 (brief case 8).
+  - **Status workflow** `SUBMITTED → UNDER_REVIEW → APPROVED/REJECTED` with a transition guard and
+    a `LeadStatusAudit` row per change; endpoints `PATCH /leads/:id/status`, `GET /leads/:id/audit`,
+    plus status controls in the admin UI.
+  - **Cached gold-rate endpoint** `GET /gold-rate` (60s TTL).
+- **B2 — Smarter agent (partial):** 4th tool `check_existing_application`; a **prompt-injection**
+  eval scenario (6/6); the system prompt refuses override attempts. (Streaming not done.)
+- **B4 — Ops (partial):** **rate limit** on `/leads` (20/min/IP), **GitHub Actions CI**
+  (`.github/workflows/ci.yml`, spins its own Postgres), **`ARCHITECTURE.md`**, **Vercel** config +
+  `docs/DEPLOY.md`, and a **2-minute demo script** (`docs/DEMO.md`). Docker skipped (deploying on Vercel).
+
+Bonus tests live in `server/tests/bonus.test.ts` (idempotency, parallel race, status workflow, gold-rate).
+
 ## ⬜ Left to do
-
-### Bonuses (user to prioritise — brief Part B/C)
-- **B1 Harden backend:** `Idempotency-Key` on `POST /leads`; race-safe duplicate (DB unique partial index/transaction); status workflow `SUBMITTED → UNDER_REVIEW → APPROVED/REJECTED` with the audit log (schema models already exist); cached gold-rate endpoint.
-- **B2 Smarter agent:** `check_existing_application` tool; prompt-injection tests; streamed replies; tool-status chips driven by live events.
-- **B3 AI extras:** appraisal-slip OCR; plain-English admin lead filter.
-- **B4 Ops:** `docker compose up`; GitHub Actions test run; rate limit on `/leads`; `ARCHITECTURE.md`; 2-min demo video.
-- Pagination on `GET /leads`.
-
-### Housekeeping
-- Commit + push the current frontend restructure (AppShell, calculator, theme, flat routes, per-field validation) — large uncommitted backlog.
-- Final fresh-clone smoke test (`npm install && npm run dev && npm test`).
+- **Deliberately skipped** (lowest ROI, over the +15 cap): B3 appraisal-slip OCR, plain-English
+  admin filter; B2 streamed replies; pagination on `GET /leads`.
+- Final fresh-clone smoke test (`npm install && npm run dev && npm test`) once the DB is reachable.

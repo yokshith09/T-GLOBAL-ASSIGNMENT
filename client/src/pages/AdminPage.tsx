@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { type Lead, type Scheme, getLeads, getSchemes } from "@/lib/api";
+import { type Lead, type LeadStatus, getLeads, getSchemes, patchLeadStatus, type Scheme } from "@/lib/api";
 import { formatRupees } from "@/lib/format";
 
 const STATUS_VARIANT = {
@@ -14,6 +14,14 @@ const STATUS_VARIANT = {
   APPROVED: "success",
   REJECTED: "destructive",
 } as const;
+
+// Allowed forward transitions (mirrors the server workflow).
+const NEXT: Record<LeadStatus, Exclude<LeadStatus, "SUBMITTED">[]> = {
+  SUBMITTED: ["UNDER_REVIEW", "APPROVED", "REJECTED"],
+  UNDER_REVIEW: ["APPROVED", "REJECTED"],
+  APPROVED: [],
+  REJECTED: [],
+};
 
 export function AdminPage() {
   const [plan, setPlan] = useState<string>("all");
@@ -36,6 +44,11 @@ export function AdminPage() {
   }, [plan]);
 
   const planName = (id: string) => schemes.find((s) => s.id === id)?.name ?? id;
+
+  async function changeStatus(applicationId: string, status: Exclude<LeadStatus, "SUBMITTED">) {
+    const res = await patchLeadStatus(applicationId, status);
+    setLeads((prev) => prev.map((l) => (l.applicationId === applicationId ? { ...l, status: res.status } : l)));
+  }
 
   // Stats reflect the current (filtered) view.
   const stats = useMemo(() => {
@@ -111,7 +124,7 @@ export function AdminPage() {
                     <TableCell className="text-right tnum">{l.netWeightGrams}</TableCell>
                     <TableCell>{planName(l.schemeId)}</TableCell>
                     <TableCell className="text-right font-medium tnum">{formatRupees(l.eligibleLoanRupees)}</TableCell>
-                    <TableCell><Badge variant={STATUS_VARIANT[l.status]}>{l.status.replace("_", " ")}</Badge></TableCell>
+                    <TableCell><StatusControl lead={l} onChange={changeStatus} /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -128,7 +141,7 @@ export function AdminPage() {
                 <CardContent className="space-y-1.5 pt-4 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{l.applicationId}</span>
-                    <Badge variant={STATUS_VARIANT[l.status]}>{l.status.replace("_", " ")}</Badge>
+                    <StatusControl lead={l} onChange={changeStatus} />
                   </div>
                   <p>{l.name} · <span className="tnum">{l.mobileNumberMasked}</span></p>
                   <p className="text-muted-foreground">{planName(l.schemeId)} · {l.netWeightGrams} g</p>
@@ -142,6 +155,38 @@ export function AdminPage() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function StatusControl({ lead, onChange }: { lead: Lead; onChange: (id: string, s: Exclude<LeadStatus, "SUBMITTED">) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const next = NEXT[lead.status];
+  const badge = <Badge variant={STATUS_VARIANT[lead.status]}>{lead.status.replace("_", " ")}</Badge>;
+  if (next.length === 0) return badge;
+  return (
+    <div className="flex items-center gap-2">
+      {badge}
+      <Select
+        value=""
+        onValueChange={async (v) => {
+          setBusy(true);
+          try {
+            await onChange(lead.applicationId, v as Exclude<LeadStatus, "SUBMITTED">);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <SelectTrigger className="h-7 w-[7.5rem] text-xs" aria-label={`Change status for ${lead.applicationId}`} disabled={busy}>
+          <SelectValue placeholder="Move to…" />
+        </SelectTrigger>
+        <SelectContent>
+          {next.map((s) => (
+            <SelectItem key={s} value={s} className="text-xs">{s.replace("_", " ")}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

@@ -77,6 +77,13 @@ export const getSchemes = () => request<Scheme[]>("/loan-schemes");
 export const getLeads = (schemeId?: string) =>
   request<Lead[]>(`/leads${schemeId ? `?schemeId=${encodeURIComponent(schemeId)}` : ""}`);
 
+export type LeadStatus = Lead["status"];
+export const patchLeadStatus = (applicationId: string, status: Exclude<LeadStatus, "SUBMITTED">) =>
+  request<{ applicationId: string; status: LeadStatus }>(`/leads/${applicationId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+
 // ---- Agent ----
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type ToolEvent = { tool: string; status: "ok" | "error" };
