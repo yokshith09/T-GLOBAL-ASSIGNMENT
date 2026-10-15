@@ -4,20 +4,33 @@ A production-minded gold-loan intake portal. Borrowers get a preliminary offer t
 a guided 3-step form or an AI chat assistant — and **both paths run on the same validated
 backend and produce identical numbers**.
 
-> TGLOBAL junior full-stack assignment. Requirements live in [`docs/`](docs/)
-> ([plan](docs/ASSIGNMENT_PLAN.md), [TRD](docs/TRD.md), [UI/UX & flow](docs/UIUX_AND_FLOW.md)).
+> TGLOBAL junior full-stack assignment. Design docs in [`docs/`](docs/):
+> [plan](docs/ASSIGNMENT_PLAN.md) · [TRD](docs/TRD.md) · [UI/UX & flow](docs/UIUX_AND_FLOW.md) ·
+> [agent evals](docs/EVAL.md).
 
 ## Stack
 - **Backend:** Node + Express + TypeScript, Zod validation, Prisma + PostgreSQL
-- **Frontend:** React + Vite + Tailwind
+- **Frontend:** React + Vite + Tailwind (shadcn/ui components)
 - **Tests:** Vitest + Supertest
-- **Database host:** Supabase (managed PostgreSQL)
+- **Database:** Supabase (managed PostgreSQL)
 - **LLM:** Google Gemini (primary) with Groq fallback — all calls server-side
+
+## How it's built
+The money maths and validation live in a pure, framework-free core (`server/src/domain`,
+`server/src/schemas`). A thin **service layer** (`server/src/services`) wraps it, and **both**
+the REST API and the AI agent call that same layer — so a lead filed by the chat agent is
+identical to one filed through the form. Money is integer **paise** end to end; LTV is applied
+in **basis points**, so there is no floating-point rounding error.
+
+```
+Form  ─▶ /quotes, /leads ─┐
+                          ├─▶ services (computeQuote, createLead) ─▶ Prisma ─▶ Postgres
+Agent ─▶ tools ───────────┘   (same code path, same numbers)
+```
 
 ## Prerequisites
 - Node.js ≥ 20
-- A Supabase project (free tier is fine). Copy its connection strings into `.env`
-  (`DATABASE_URL` = pooled 6543, `DIRECT_URL` = direct 5432).
+- A Supabase project (free tier is fine) — copy its connection string into `.env`.
 
 ## Setup
 ```bash
@@ -26,10 +39,10 @@ npm install
 
 # 2. Configure env
 cp .env.example .env
-#   - set DATABASE_URL to your Postgres
+#   - set DATABASE_URL (and DIRECT_URL) to your Supabase connection string
 #   - add GEMINI_API_KEY (primary) and/or GROQ_API_KEY (fallback) for the agent
 
-# 3. Database (once a DB is reachable)
+# 3. Database
 npm run db:migrate      # apply Prisma migrations
 npm run db:seed         # seed the two loan schemes
 
@@ -37,37 +50,63 @@ npm run db:seed         # seed the two loan schemes
 npm run dev
 
 # 5. Tests
-npm test                # unit (maths) + API (400/409) tests
-npm run eval            # agent test conversations (Part B)
+npm test                # unit (maths) + API (400/404/409) tests
+npm run eval            # agent test conversations (needs an LLM key + DB)
 ```
 
+> **Supabase networking note:** direct connections (`db.<ref>.supabase.co`) are IPv6-only.
+> On an IPv4 network use the **Session pooler** string (`...pooler.supabase.com:5432`) for
+> both `DATABASE_URL` and `DIRECT_URL`. Some networks block outbound 5432 — use one that allows it.
+
 ## Environment variables
-See [`.env.example`](.env.example). Never commit real keys — LLM keys are read on the
-backend only and never reach the browser.
+See [`.env.example`](.env.example). LLM keys are read on the **backend only** and never reach
+the browser. Never commit real keys — `.env` is gitignored.
 
 | Var | Purpose |
 |---|---|
-| `DATABASE_URL` | Supabase pooled Postgres connection (port 6543) |
-| `DIRECT_URL` | Supabase direct connection (port 5432), used by migrations |
+| `DATABASE_URL` | Supabase connection (Session pooler, port 5432) |
+| `DIRECT_URL` | Connection used by Prisma migrations |
 | `PORT` | API port (default 4000) |
 | `RATE_24K_PAISE_PER_GRAM` | Mock 24K gold rate in paise (700000 = ₹7,000/g) |
 | `GEMINI_API_KEY` / `GEMINI_MODEL` | Primary LLM |
 | `GROQ_API_KEY` / `GROQ_MODEL` | Fallback LLM |
 | `VITE_API_BASE_URL` | API base the frontend calls |
 
+## API
+Base path `/api/v1`. Errors share one shape: `{ error: { code, message, fields[] } }`.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/loan-schemes` | Active plans (rate/LTV as %, never above 75%). |
+| POST | `/quotes` | Pure calculation, no DB write. |
+| POST | `/leads` | Validates, **re-computes server-side**, dedupes (409 within 7 days), 201 with `applicationId`. |
+| GET | `/leads` | Newest first, mobile masked, `?schemeId=` filter. |
+| POST | `/agent/chat` | Runs the LLM + tools server-side. |
+| POST | `/agent/confirm` | Files a lead the user confirmed in chat. |
+
 ## Project layout
 ```
-server/   Express API, Prisma schema + seed, services, agent, tests
-client/   React + Vite SPA (apply flow, chat panel, admin)
-docs/     PRD-derived plan, TRD, UI/UX & flow
+server/   Express API, Prisma schema + seed, domain maths, services, agent, tests
+client/   React + Vite SPA (Apply, Assistant, Admin)
+docs/     plan, TRD, UI/UX & flow, agent evals
 ```
 
 ## Status
-Phase 0 (scaffold) complete: both workspaces install and run; `/health` + a passing
-Supertest check are in place. Feature phases (maths → DB → API → UI → agent → tests) follow.
-
-## What I'd do with more time
-_(fill in at submission)_
+Required scope complete: 4 endpoints, exact maths + validation, the 3-step form, the admin
+table, and the AI agent are built and wired. Backend logic is covered by **31 passing tests**
+(maths cases 1–6, LTV cap, 400/404/409, masking) plus agent-tool tests. The agent and the
+DB-backed tests need an LLM key and a reachable Supabase instance to run end to end.
 
 ## Bonuses attempted
-_(list every bonus tried, even if unfinished — required by the brief)_
+- **Status workflow groundwork** — `LeadStatus` enum + `LeadStatusAudit` table in the schema (not yet exposed via an endpoint).
+- **Idempotency groundwork** — `IdempotencyKey` model in the schema (header handling not yet wired).
+- **Provider fallback** — Gemini → Groq, so the agent degrades gracefully.
+- Not yet done: Idempotency-Key handling, race-safe duplicates, Docker, CI, slip OCR, streaming.
+
+## What I'd do with more time
+- Finish B1: `Idempotency-Key` on `POST /leads`, a DB unique constraint for race-safe dedupe,
+  and the status workflow endpoints with the audit log.
+- Add streaming agent replies and a `check_existing_application` tool (B2).
+- Dockerise (`docker compose up`) and add a GitHub Actions test run (B4).
+- A small landing page and a light admin auth gate.
+- Swap the random `GL-` id for a DB sequence if strictly sequential ids are wanted.
