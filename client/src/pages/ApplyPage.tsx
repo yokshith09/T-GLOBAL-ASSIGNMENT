@@ -234,7 +234,7 @@ export function ApplyPage() {
       </div>
 
       <aside className="order-1 space-y-3 lg:order-2">
-        <Tile icon={Coins} label="Today's 24K rate" value="₹7,000 / g" hint="Mock rate for this demo" />
+        <Tile icon={Coins} label="Today's 24K rate" value="₹7,000 / g" hint="Indicative 24K gold rate" />
         <Tile icon={ShieldCheck} label="Max loan-to-value" value="75%" hint="Capped by RBI norms" />
         <Tile icon={Sparkles} label="Decision" value="~2 min" hint="Preliminary, before appraisal" />
         <div className="rounded-lg border border-dashed p-4 text-xs text-muted-foreground">
