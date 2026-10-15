@@ -7,11 +7,15 @@ How AI tools were used on this assignment, and where they were wrong.
 - Supabase (managed Postgres) and Google Gemini / Groq power the running app, not the authoring.
 
 ## Which LLM runs the agent
-- **Primary:** Google Gemini (`gemini-2.0-flash`), called via its OpenAI-compatible endpoint.
-- **Fallback:** Groq (`llama-3.3-70b-versatile`).
+- **Primary:** Google Gemini (`gemini-2.5-flash`), called via its OpenAI-compatible endpoint.
+- **Fallback:** Groq (`openai/gpt-oss-20b`).
 - One OpenAI-SDK tool-calling loop drives both (just a different base URL + key + model).
 - Keys live in the server `.env` only; the browser never sees them — all LLM calls go through
   `POST /api/v1/agent/chat`.
+- Model names drift as providers retire old ones — we started with `gemini-2.0-flash` and
+  `llama-3.3-70b-versatile`, both since retired (404 from the provider). `server/src/lib/env.ts`
+  keeps a small set of known-retired names and falls back to the current default for any of
+  them, so an old `.env` keeps working without a manual edit.
 
 ## Two exact prompts
 

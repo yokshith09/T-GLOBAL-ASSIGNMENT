@@ -4,9 +4,10 @@ A production-minded gold-loan intake portal. Borrowers get a preliminary offer t
 a guided 3-step form or an AI chat assistant — and **both paths run on the same validated
 backend and produce identical numbers**.
 
-> TGLOBAL junior full-stack assignment. Design docs in [`docs/`](docs/):
-> [plan](docs/ASSIGNMENT_PLAN.md) · [TRD](docs/TRD.md) · [UI/UX & flow](docs/UIUX_AND_FLOW.md) ·
-> [agent evals](docs/EVAL.md).
+> TGLOBAL junior full-stack assignment. Docs in [`docs/`](docs/):
+> [plan](docs/ASSIGNMENT_PLAN.md) · [architecture](docs/ARCHITECTURE.md) ·
+> [agent evals](docs/EVAL.md) · [deploy](docs/DEPLOY.md) · [progress log](docs/PROGRESS.md).
+> See [`VERIFICATION_REPORT.md`](VERIFICATION_REPORT.md) for a requirement-by-requirement audit.
 
 ## Stack
 - **Backend:** Node + Express + TypeScript, Zod validation, Prisma + PostgreSQL
@@ -72,6 +73,11 @@ the browser. Never commit real keys — `.env` is gitignored.
 | `GROQ_API_KEY` / `GROQ_MODEL` | Fallback LLM |
 | `VITE_API_BASE_URL` | API base the frontend calls |
 
+## Deployment
+The whole app (static frontend + the Express API as a serverless function) deploys as a single
+Vercel project — see [`docs/DEPLOY.md`](docs/DEPLOY.md) for the exact steps and the one
+Supabase-networking caveat serverless functions share with any other host.
+
 ## API
 Base path `/api/v1`. Errors share one shape: `{ error: { code, message, fields[] } }`.
 
@@ -102,13 +108,17 @@ page for a quick chat without leaving the current screen.
 ```
 server/   Express API, Prisma schema + seed, domain maths, services, agent, tests
 client/   React + Vite SPA (landing, calculator, apply, assistant, admin)
-docs/     plan, TRD, UI/UX & flow, architecture, deploy, agent evals, progress
+api/      Vercel serverless entry point (wraps the same Express app)
+docs/     plan, architecture, deploy, agent evals, progress checkpoints
 ```
 
 ## Status
-Required scope complete and verified end to end. **35 backend tests pass** (maths cases 1–6,
-LTV cap, 400/404/409, masking, agent tools) and the **agent eval passes 5/5** against live
-models + Supabase. Running checkpoints are in [`docs/PROGRESS.md`](docs/PROGRESS.md).
+Required scope complete. **43 backend tests** across maths, validation, the 4 endpoints, the
+agent tools, and the B1 bonus hardening (idempotency, race-safe dedupe, status workflow).
+**All 28 items on the project's own verification checklist pass** — see
+[`VERIFICATION_REPORT.md`](VERIFICATION_REPORT.md) for the full table and how each one was
+checked (local test run, CI run, or code inspection). Running checkpoints are in
+[`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 ### LLM models
 Verified live on 2026-10-15: **`gemini-2.5-flash`** (primary), **`openai/gpt-oss-20b`** (Groq
@@ -118,18 +128,25 @@ provider: `GET https://api.groq.com/openai/v1/models` (Bearer key) and
 `GET https://generativelanguage.googleapis.com/v1beta/models?key=…`.
 
 ## Bonuses implemented
-- **Idempotency-Key** on `POST /leads` (replays the original response — case 7).
-- **Race-safe duplicates** via a per-mobile advisory lock (parallel → one 201 + one 409 — case 8).
-- **Status workflow** `SUBMITTED → UNDER_REVIEW → APPROVED/REJECTED` + audit log, with admin controls.
+- **Idempotency-Key** on `POST /leads` (replays the original response — case 7). Verified by CI.
+- **Race-safe duplicates** via a per-mobile advisory-lock transaction (parallel → one 201 + one 409 — case 8). Verified by CI.
+- **Status workflow** `SUBMITTED → UNDER_REVIEW → APPROVED/REJECTED` + audit log, with admin
+  status controls. Verified by CI, including the cascade-delete fix CI's own run surfaced.
 - **Cached gold-rate endpoint** `GET /gold-rate`.
-- **Agent:** 4th tool `check_existing_application`; prompt-injection resistance (eval 6/6).
-- **Ops:** rate limit on `/leads`, **GitHub Actions CI** (own Postgres), `ARCHITECTURE.md`, Vercel config + `docs/DEPLOY.md`. Provider fallback Gemini → Groq.
-- Skipped (low ROI, over the +15 cap): slip OCR, NL admin filter, streaming, pagination.
+- **Agent:** 4th tool `check_existing_application`; a prompt-injection scenario is written into
+  `npm run eval` (6 scenarios total) but has not yet had a fresh live run against the current
+  code — see [`VERIFICATION_REPORT.md`](VERIFICATION_REPORT.md) for exactly what's confirmed.
+- **Ops:** rate limit on `/leads`, **GitHub Actions CI** (own Postgres, so it's not at the mercy
+  of a developer's network), `ARCHITECTURE.md`, and a working **Vercel** deployment (frontend +
+  API as a serverless function) — see `docs/DEPLOY.md`.
+- Skipped (low ROI, over the brief's +15 bonus cap): appraisal-slip OCR, a plain-English admin
+  filter, streamed agent replies, pagination on `GET /leads`.
 
 ## What I'd do with more time
-- Finish B1: `Idempotency-Key` on `POST /leads`, a DB unique constraint for race-safe dedupe,
-  and the status workflow endpoints with the audit log.
-- Add streaming agent replies and a `check_existing_application` tool (B2).
-- Dockerise (`docker compose up`) and add a GitHub Actions test run (B4).
-- A small landing page and a light admin auth gate.
+- Run `npm run eval`'s 6th (prompt-injection) scenario live and fold the result into
+  `VERIFICATION_REPORT.md`.
+- A real admin login (Supabase Auth) in place of the passcode gate, which is cosmetic only.
+- B3: appraisal-slip OCR and a plain-English admin lead filter.
+- B2: streamed agent replies.
+- Pagination on `GET /leads`.
 - Swap the random `GL-` id for a DB sequence if strictly sequential ids are wanted.

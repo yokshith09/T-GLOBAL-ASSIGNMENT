@@ -4,6 +4,34 @@ A running record of what's built and what remains. Newest checkpoint on top.
 
 ---
 
+## ✅ Checkpoint — 2026-10-15 (Vercel deployment + repo cleanup)
+
+- **Vercel deployment, actually wired up:** `api/[...path].ts` is a serverless catch-all that
+  exports the same Express app (`server/src/app.ts`) used locally — no route duplication. Root
+  `vercel.json` builds the client and rewrites non-`/api` paths to `index.html` for SPA routing.
+  A root `postinstall` runs `prisma generate` so the API function has a client to import.
+  `docs/DEPLOY.md` rewritten with the real steps (env vars, the `VITE_API_BASE_URL=/api/v1`
+  same-origin setting, and the frontend-only alternative via `client/vercel.json`).
+- **Repo cleanup:** removed `docs/TRD.md` and `docs/UIUX_AND_FLOW.md` — both described the
+  pre-restructure single-page layout (slide-over chat, no landing/calculator/dashboard split)
+  and had gone stale enough to actively mislead a reader against the shipped app. Their current
+  content lives in `docs/ARCHITECTURE.md` and the README's "Frontend routes" section instead.
+- **Fixed real doc/code inconsistencies found during the audit:**
+  - `.env.example` recommended the Transaction pooler (port 6543) for `DATABASE_URL`, while the
+    README and the connection that's actually been used all session is the Session pooler (port
+    5432) for both vars. Aligned `.env.example` to what's verified.
+  - `AI_LOG.md` still named the two now-retired LLM models (`gemini-2.0-flash`,
+    `llama-3.3-70b-versatile`) instead of the live ones.
+  - README's "What I'd do with more time" listed several things (Idempotency-Key, status
+    workflow + audit, the 4th agent tool) that were already done — a reviewer would have
+    immediately spotted the contradiction. Rewritten to reflect what's actually left.
+  - README's bonus/eval claims softened to match `VERIFICATION_REPORT.md`'s honest state (the
+    6th eval scenario is written but not yet re-run live).
+- Verified after cleanup: root `tsconfig.json` (api/ folder) typechecks clean, server build
+  clean, client build clean, 23/23 non-DB tests still pass.
+
+---
+
 ## ✅ Checkpoint — 2026-10-15 (all 28 requirements unblocked)
 
 The local network still couldn't reach Supabase directly (diagnosed precisely: TCP handshake
