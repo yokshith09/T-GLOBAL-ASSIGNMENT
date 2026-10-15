@@ -33,7 +33,7 @@ running as one serverless function. No Docker, no second host.
    build/deploy — saving a variable alone does not update an already-built deployment.
 
 ### How it's wired
-- `api/index.ts` is a single named Vercel Serverless Function. `vercel.json` explicitly
+- `api/index.mjs` is a single plain-ESM Vercel Serverless Function importing the tsc-compiled server (`server/dist`). `vercel.json` explicitly
   rewrites every request under `/api/*` to it (`"/api/(.*)" → "/api"`), and it exports the
   **same Express app** (`server/src/app.ts`) used for local dev — no route duplication, no
   behaviour difference. Vercel preserves the original path as `req.url` on a rewrite, so the
@@ -65,7 +65,7 @@ If you'd rather keep the API on a traditional long-running Node process (Render,
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | "Couldn't load loan plans", network tab shows a request to `localhost:4000` | `VITE_API_BASE_URL` wasn't applied to this build | Check it's set for **Production**, then redeploy |
-| Request reaches `yoursite.vercel.app/api/...` but returns **404** | The API function isn't being found/routed | Confirm `api/index.ts` exists (not a bracket-named file) and `vercel.json`'s `/api/(.*)` rewrite is present |
+| Request reaches `yoursite.vercel.app/api/...` but returns **404** | The API function isn't being found/routed | Confirm `api/index.mjs` exists (not a bracket-named file) and `vercel.json`'s `/api/(.*)` rewrite is present |
 | Request returns **500** with Vercel's own "FUNCTION_INVOCATION_FAILED" page (not our JSON error body) | The function crashed on startup — almost always `DATABASE_URL` missing/empty in Production, or `@prisma/client` not generated for this build | Check every backend env var has **Production** ticked; confirm `vercel.json`'s `buildCommand` includes `prisma generate` |
 | Request returns **500** with our own JSON body (`{"error":{"code":"INTERNAL_ERROR",...}}`) | The function started fine but a request-time call failed (e.g. Supabase unreachable) | Check the Function's runtime logs in the Vercel dashboard for the real error |
 
