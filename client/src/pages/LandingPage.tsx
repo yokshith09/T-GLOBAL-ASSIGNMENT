@@ -1,7 +1,8 @@
-import { ArrowRight, BadgeCheck, Calculator, Coins, FileCheck, IdCard, Lock, MessageSquare, Scale, ShieldCheck, Sparkles, Weight, Zap } from "lucide-react";
+import { ArrowRight, BadgeCheck, Bot, Calculator, Coins, FileCheck, IdCard, Lock, MessageSquare, Scale, ShieldCheck, Sparkles, Weight, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Brand } from "@/components/Brand";
 import { FaqList } from "@/components/FaqList";
+import { FloatingAssistant } from "@/components/FloatingAssistant";
 import { Footer } from "@/components/Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,35 @@ export function LandingPage() {
               {PARTNERS.map((p) => (
                 <span key={p} className="font-display text-lg font-semibold text-muted-foreground/70">{p}</span>
               ))}
+            </div>
+          </section>
+
+          {/* AI assistant callout */}
+          <section className="overflow-hidden rounded-2xl border bg-card p-6 sm:p-8">
+            <div className="grid items-center gap-6 sm:grid-cols-[1fr_auto]">
+              <div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+                  <Sparkles className="h-3.5 w-3.5" /> AI-powered portal
+                </span>
+                <h2 className="mt-3 font-display text-2xl font-semibold sm:text-3xl">
+                  Apply by chatting with <span className="text-gold">Loan Assist</span>.
+                </h2>
+                <p className="mt-2 max-w-prose text-muted-foreground">
+                  Tell it what gold you have in plain words. It collects the details, quotes through the
+                  same validated backend as the form, and files your application once you confirm. Every
+                  number comes from our server, never guessed by the model.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-full border bg-background px-3 py-1">Gold loans only</span>
+                  <span className="rounded-full border bg-background px-3 py-1">No investment advice</span>
+                  <span className="rounded-full border bg-background px-3 py-1">Confirms before filing</span>
+                </div>
+              </div>
+              <div className="hidden shrink-0 place-items-center sm:grid">
+                <span className="anim-float grid h-28 w-28 place-items-center rounded-3xl bg-accent text-accent-foreground shadow-lg shadow-accent/20">
+                  <Bot className="h-12 w-12" />
+                </span>
+              </div>
             </div>
           </section>
 
@@ -228,6 +258,7 @@ export function LandingPage() {
       </main>
 
       <Footer />
+      <FloatingAssistant />
     </div>
   );
 }
