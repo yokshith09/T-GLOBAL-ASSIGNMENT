@@ -92,10 +92,16 @@ docs/     plan, TRD, UI/UX & flow, agent evals
 ```
 
 ## Status
-Required scope complete: 4 endpoints, exact maths + validation, the 3-step form, the admin
-table, and the AI agent are built and wired. Backend logic is covered by **31 passing tests**
-(maths cases 1–6, LTV cap, 400/404/409, masking) plus agent-tool tests. The agent and the
-DB-backed tests need an LLM key and a reachable Supabase instance to run end to end.
+Required scope complete and verified end to end. **35 backend tests pass** (maths cases 1–6,
+LTV cap, 400/404/409, masking, agent tools) and the **agent eval passes 5/5** against live
+models + Supabase. Running checkpoints are in [`docs/PROGRESS.md`](docs/PROGRESS.md).
+
+### LLM models
+Verified live on 2026-10-15: **`gemini-2.5-flash`** (primary), **`openai/gpt-oss-20b`** (Groq
+fallback). Earlier names were retired by the providers; `server/src/lib/env.ts` coerces the old
+names to the live defaults. To re-check which models your key can use, list them from each
+provider: `GET https://api.groq.com/openai/v1/models` (Bearer key) and
+`GET https://generativelanguage.googleapis.com/v1beta/models?key=…`.
 
 ## Bonuses attempted
 - **Status workflow groundwork** — `LeadStatus` enum + `LeadStatusAudit` table in the schema (not yet exposed via an endpoint).

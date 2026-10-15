@@ -1,0 +1,49 @@
+# Project Progress — Checkpoints
+
+A running record of what's built and what remains. Newest checkpoint on top.
+
+---
+
+## ✅ Checkpoint — 2026-10-15 (current)
+
+### Required scope — complete & verified
+- **Phase 0 — Scaffold:** npm-workspaces monorepo (server + client), `npm install/dev/test` work.
+- **Phase 1 — Maths & validation:** pure `computeQuote` (integer paise + basis-point LTV), shared Zod schemas. 23 unit/edge tests, brief cases 1–6.
+- **Phase 2 — Database:** Prisma schema on Supabase (money as `BigInt` paise), migration + seed of the two plans.
+- **Phase 3 — API:** 4 endpoints behind a reusable service layer — `GET /loan-schemes`, `POST /quotes`, `POST /leads` (re-computes server-side, 7-day dedupe → 409, unknown plan → 404, 201 with `GL-xxxxxx`), `GET /leads` (newest first, masked, plan filter). Single error contract, 500s as clean JSON, all async wrapped. 8 live-DB API tests.
+- **Phase 4 — Apply form:** typed API client, 3-step flow, debounced live `/quotes`, real submit, friendly 409 banner, **per-field validation on blur** with hints + valid/error icons.
+- **Phase 5 — Admin:** live `GET /leads`, stat tiles, plan filter, masked mobiles, loading/empty/error states. Reached via a gated **Staff** link in the top header.
+- **Phase 6 — AI agent:** `POST /agent/chat|confirm|status`, one OpenAI-SDK loop with **Gemini primary → Groq fallback**, 3 Zod-validated tools on the same services, guardrails + confirm-before-submit gating. Floating Loan Assist widget.
+- **Phase 7 — Evals:** `npm run eval` — **5/5 scenarios pass** (happy, missing field, net>gross, duplicate 409, off-topic) against live models + DB.
+- **Phase 8 — Docs:** README, AI_LOG (2 prompts + a real floor-vs-round bug), EVAL.md, this file.
+
+### Tests
+- **35 backend tests pass** (maths, validation, edge cases, API 400/404/409, agent tools).
+- **Agent eval 5/5** with live models.
+
+### LLM models — verified live 2026-10-15
+- Old names were **deprecated/404**. Verified replacements:
+  - Primary: **`gemini-2.5-flash`**
+  - Fallback (Groq): **`openai/gpt-oss-20b`**
+- `env.ts` coerces the old names (`gemini-2.0-flash`, `llama-3.3-70b-versatile`) to the live defaults.
+- Re-check anytime by hitting each provider's `/models` endpoint with your key (see README).
+
+### UI / UX
+- Aurum identity (Fraunces + Plus Jakarta Sans), light default + enhanced dark mode (persisted, toggle).
+- Public **landing** (hero + animation, partners, why, how-it-works, FAQ) and public **`/calculator`** (slider, tenure, EMI/interest/total breakdown, principal-vs-interest bar, today's rate).
+- **App shell** (`/apply`, `/calculator`, `/admin`) with Apply/Calculator/Staff in the top header; floating Loan Assist.
+
+---
+
+## ⬜ Left to do
+
+### Bonuses (user to prioritise — brief Part B/C)
+- **B1 Harden backend:** `Idempotency-Key` on `POST /leads`; race-safe duplicate (DB unique partial index/transaction); status workflow `SUBMITTED → UNDER_REVIEW → APPROVED/REJECTED` with the audit log (schema models already exist); cached gold-rate endpoint.
+- **B2 Smarter agent:** `check_existing_application` tool; prompt-injection tests; streamed replies; tool-status chips driven by live events.
+- **B3 AI extras:** appraisal-slip OCR; plain-English admin lead filter.
+- **B4 Ops:** `docker compose up`; GitHub Actions test run; rate limit on `/leads`; `ARCHITECTURE.md`; 2-min demo video.
+- Pagination on `GET /leads`.
+
+### Housekeeping
+- Commit + push the current frontend restructure (AppShell, calculator, theme, flat routes, per-field validation) — large uncommitted backlog.
+- Final fresh-clone smoke test (`npm install && npm run dev && npm test`).

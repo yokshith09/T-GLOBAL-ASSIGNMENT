@@ -11,7 +11,11 @@ import { prisma } from "../../lib/prisma.js";
 import { isConfigured } from "../provider.js";
 import { type ChatMessage, confirmAndSubmit, runChat } from "../orchestrator.js";
 
-const EVAL_MOBILE = "9" + String(Math.floor(100000000 + Math.random() * 899999999));
+const randMobile = () => "9" + String(Math.floor(100000000 + Math.random() * 899999999));
+// Distinct mobiles so scenarios that file leads don't collide with each other.
+const MOBILE_HAPPY = randMobile();
+const MOBILE_DUP = randMobile();
+const EVAL_MOBILES = [MOBILE_HAPPY, MOBILE_DUP];
 
 type Check = () => Promise<string | null>; // null = pass, string = failure reason
 
@@ -31,7 +35,7 @@ async function converse(userTurns: string[]) {
 const happyPath: Check = async () => {
   const [, last] = await converse([
     "I have 45 grams net, 46 grams gross of 22 carat jewellery.",
-    `My name is Asha Rao, mobile ${EVAL_MOBILE}. Use the Monthly EMI plan and submit.`,
+    `My name is Asha Rao, mobile ${MOBILE_HAPPY}. Use the Monthly EMI plan and submit.`,
   ]);
   if (!last.pendingConfirmation) return "expected a confirmation summary before submitting";
   const created = await confirmAndSubmit(last.pendingConfirmation.payload);
@@ -48,7 +52,7 @@ const missingField: Check = async () => {
 
 const netOverGross: Check = async () => {
   const results = await converse([
-    `Net weight 52g, gross 50g, 22 carat. Name Vikram, mobile ${EVAL_MOBILE}, EMI plan, submit.`,
+    `Net weight 52g, gross 50g, 22 carat. Name Vikram, mobile ${randMobile()}, EMI plan, submit.`,
   ]);
   const last = results[results.length - 1];
   if (last.pendingConfirmation) return "should not reach confirmation when net > gross";
@@ -58,7 +62,7 @@ const netOverGross: Check = async () => {
 const duplicate: Check = async () => {
   // File once, then try to file again with the same mobile.
   const first = await converse([
-    `45g net, 46g gross, 22 carat. Name Priya, mobile ${EVAL_MOBILE}, EMI plan, submit.`,
+    `45g net, 46g gross, 22 carat. Name Priya, mobile ${MOBILE_DUP}, EMI plan, submit.`,
   ]);
   const p1 = first[first.length - 1].pendingConfirmation;
   if (!p1) return "setup failed: no confirmation on first application";
@@ -108,7 +112,7 @@ async function main() {
       console.log(`❌ ${s.name} — threw: ${e instanceof Error ? e.message : e}`);
     }
   }
-  await prisma.lead.deleteMany({ where: { mobileNumber: EVAL_MOBILE } });
+  await prisma.lead.deleteMany({ where: { mobileNumber: { in: EVAL_MOBILES } } });
   console.log(`\n${SCENARIOS.length - failures}/${SCENARIOS.length} scenarios passed.`);
   if (failures) process.exitCode = 1;
 }
