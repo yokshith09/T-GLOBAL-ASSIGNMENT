@@ -4,6 +4,30 @@ A running record of what's built and what remains. Newest checkpoint on top.
 
 ---
 
+## ✅ Checkpoint — 2026-10-15 (all 28 requirements unblocked)
+
+The local network still couldn't reach Supabase directly (diagnosed precisely: TCP handshake
+completes, but the hotspot silently drops all Postgres protocol data afterward — confirmed with
+a raw-socket probe, not assumed). Rather than keep retrying, pushed to `main` and let **GitHub
+Actions CI** — its own fresh Postgres, independent of any local network — run the full suite.
+
+- CI's first run found a **real bug**: deleting a `Lead` with status-audit history hit a
+  foreign-key violation (`ON DELETE RESTRICT`). Fixed with a cascade-delete migration
+  (`20261015190000_audit_cascade_delete`).
+- CI's second run: **Success**, 1m 14s, zero test failures.
+- **[`VERIFICATION_REPORT.md`](../VERIFICATION_REPORT.md) updated: all 28 requirements now
+  PASS** (10 local automated, 13 via CI, 5 code inspection, 1 automated secret-scan, 1
+  CI+static-analysis) — zero BLOCKED, zero FAIL.
+
+### Still open (not a blocker, just not re-run this session)
+- `npm run eval` (6 agent scenarios incl. prompt injection) needs a live LLM call; last green
+  run (5/5) predates the 6th scenario. Run it once your own machine reaches both Supabase and
+  the LLM provider.
+- A hands-on browser walkthrough of Apply → chat → admin wasn't repeated this session (the
+  CI+code-inspection evidence covers the same logic end to end).
+
+---
+
 ## ✅ Checkpoint — 2026-10-15 (current, post-verification)
 
 ### This checkpoint's work
